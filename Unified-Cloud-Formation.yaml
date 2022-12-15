@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Setting up your own private and secure VPN. You can read instructions
+  on our blog https://www.webdigi.co.uk/blog/2015/how-to-setup-your-own-private-secure-free-vpn-on-the-amazon-aws-cloud-in-10-minutes/
+  and you can follow video instructions on Youtube https://www.youtube.com/watch?v=fBBERp5CUgo
+
+Parameters:
+  Username:
+    Description: VPN Username
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    Default: user
+    ConstraintDescription: must begin with a letter and contain only alphanumeric
+      characters.
+  VPNPassword:
+    NoEcho: 'true'
+    Description: VPN Password (Min 4 characters)
+    Type: String
+    MinLength: '4'
+    MaxLength: '255'
+    Default: user
+    ConstraintDescription: must contain atleast 4 characters.
+  VPNPhrase:
+    NoEcho: 'true'
+    Description: Passphrase for IPSEC PSK (Min 4 characters)
+    Type: String
+    MinLength: '4'
+    Default: user
+    MaxLength: '255'
+    ConstraintDescription: must contain atleast 4 characters.
+
+Resources:
+  VPNServerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-02045ebddb047018b
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - sg-05ec44b85c90dc083
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/sh
+            YOUR_IPSEC_PSK=${VPNPhrase}
+            YOUR_USERNAME=${Username}
+            YOUR_PASSWORD=${VPNPassword}
+            wget https://get.vpnsetup.net -O vpn.sh
+            sudo VPN_IPSEC_PSK=$YOUR_IPSEC_PSK VPN_USER=$YOUR_USERNAME VPN_PASSWORD=$YOUR_PASSWORD sh vpn.sh
+
+Outputs:
+  VPNServerAddress:
+    Description: Use the IP as Server Address or VPN Host
+    Value:
+      Fn::GetAtt:
+        - VPNServerInstance
+        - PublicIp
+  WebdigiNotes:
+    Description: Allow upto 5 minutes after setup to connect. Please contact us at
+      https://www.webdigi.co.uk/blog/2015/how-to-setup-your-own-private-secure-free-vpn-on-the-amazon-aws-cloud-in-10-minutes/
+      for any help!
+    Value: Comments
